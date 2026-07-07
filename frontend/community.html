@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackOpen – Community</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .community-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #5dade2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .community-header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .community-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        .community-title {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 1rem;
+        }
+        .community-count-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .community-description {
+            margin-top: 1rem;
+            font-size: 1.1rem;
+            opacity: 0.95;
+            max-width: 600px;
+        }
+        .community-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .community-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .top-contributors {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .contributor-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .contributor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .contributor-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+            font-weight: bold;
+        }
+        .contributor-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        .contributor-score {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        .community-intro {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .community-intro h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+    <a href="index.html" class="logo">StackOpen</a>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search in this community...">
+        <i class="fas fa-search"></i>
+    </div>
+    <div class="user-actions">
+        <button id="themeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+        <span id="loggedInUser" style="display:none;"></span>
+        <a href="login.html" id="loginLink" class="btn btn-outline">Login</a>
+        <a href="signup.html" id="signupLink" class="btn btn-primary">Sign Up</a>
+        <a href="profile.html" id="profileLink" class="btn btn-outline" style="display:none;">Profile</a>
+        <button id="logoutBtn" class="btn btn-outline" style="display:none;">Logout</button>
+    </div>
+</header>
+
+<div class="container">
+    <aside class="sidebar">
+        <nav><ul>
+            <li><a href="index.html"><i class="fas fa-home"></i> Home Feed</a></li>
+            <li><a href="tags.html"><i class="fas fa-users"></i> Communities</a></li>
+            <li><a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a></li>
+        </ul></nav>
+        <div class="create-post-side">
+            <a href="create-post.html" class="btn btn-primary btn-block">+ Ask Question</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div id="communityContainer">
+            <!-- Community header will be rendered here -->
+        </div>
+
+        <div class="community-tabs">
+            <button class="tab-btn active" data-tab="questions"><i class="fas fa-comments"></i> Questions</button>
+            <button class="tab-btn" data-tab="members"><i class="fas fa-users"></i> Top Members</button>
+            <button class="tab-btn" data-tab="about"><i class="fas fa-info-circle"></i> About</button>
+        </div>
+
+        <div id="questionsTab" class="tab-content active">
+            <div id="communityQuestionsContainer" class="posts-list">
+                <p>Loading questions...</p>
+            </div>
+        </div>
+
+        <div id="membersTab" class="tab-content">
+            <div id="topContributorsContainer" class="top-contributors"></div>
+        </div>
+
+        <div id="aboutTab" class="tab-content">
+            <div class="community-intro">
+                <h2>About This Community</h2>
+                <p id="communityAbout">Loading...</p>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border-color);">
+                <div>
+                    <h3>Community Guidelines</h3>
+                    <ul style="line-height: 1.8;">
+                        <li>Be respectful and professional</li>
+                        <li>Search before asking duplicates</li>
+                        <li>Provide clear examples and error messages</li>
+                        <li>Vote on helpful answers and questions</li>
+                        <li>Help others grow their knowledge</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/posts.js"></script>
+<script src="js/main.js"></script>
+<script>
+// Helper functions (unchanged)
+function escapeHTML(str) {
+    return String(str || "").replace(/[&<>"]/g, m =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+}
+
+function timeAgo(dateString) {
+    const date = new Date(dateString.endsWith('Z') ? dateString : (dateString || Date.now()) + 'Z');
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const communityName = urlParams.get('name');
+
+    if (!communityName) {
+        window.location.href = 'tags.html';
+        return;
+    }
+
+    try {
+        const allPosts = await API.fetchPosts();
+        const communityPosts = allPosts.filter(p => 
+            (p.tags || []).some(t => t.toLowerCase() === communityName.toLowerCase())
+        );
+
+        const questionCount = communityPosts.length;
+
+        // Build community header
+        const headerHTML = `
+            <div class="community-header">
+                <h1>
+                    <div class="community-icon">#</div>
+                    <div class="community-title">
+                        <div>${escapeHTML(communityName)}</div>
+                        <span class="community-count-badge">${questionCount} question${questionCount !== 1 ? 's' : ''}</span>
+                    </div>
+                </h1>
+                <div class="community-description">
+                    Connect with developers interested in <strong>${escapeHTML(communityName)}</strong>. Ask questions, share knowledge, and grow together.
+                </div>
+                <div class="community-actions">
+                    <a href="create-post.html" class="btn btn-outline">Ask Question</a>
+                </div>
+            </div>
+        `;
+        document.getElementById('communityContainer').innerHTML = headerHTML;
+
+        // Render questions and contributors
+        renderCommunityQuestions(communityPosts);
+        const topContributors = getTopContributors(communityPosts);
+        renderTopContributors(topContributors);
+
+        document.getElementById('communityAbout').textContent = 
+            `${escapeHTML(communityName)} is a community for developers working with or interested in this technology.`;
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const filtered = communityPosts.filter(p =>
+                (p.title || "").toLowerCase().includes(term) ||
+                (p.body || "").toLowerCase().includes(term)
+            );
+            renderCommunityQuestions(filtered);
+        });
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+            });
+        });
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById('communityContainer').innerHTML = 
+            '<p class="error">Failed to load community.</p>';
+    }
+});
+
+// Renders the list of questions for this community
+function renderCommunityQuestions(posts) {
+    const container = document.getElementById('communityQuestionsContainer');
+    
+    if (!posts || posts.length === 0) {
+        container.innerHTML = '<p class="no-posts">No questions in this community yet.</p>';
+        return;
+    }
+
+    container.innerHTML = posts.map(post => {
+        // Use the answerCount property from the post object
+        const answerCount = post.answerCount || 0;
+
+        return `
+            <div class="post-card">
+                <div class="post-content">
+                    <a href="post.html?id=${post.id}" class="post-title">
+                        ${escapeHTML(post.title)}
+                    </a>
+                    <p class="post-excerpt">${escapeHTML((post.body || "").substring(0, 150))}...</p>
+                    <div class="post-tags">
+                        ${(post.tags || []).map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="post-meta">
+                    <span>
+                        <i class="far fa-comment"></i> 
+                        ${answerCount} ${answerCount === 1 ? 'answer' : 'answers'}
+                    </span>
+                    <span class="post-author">${escapeHTML(post.author || 'Anonymous')}</span>
+                    <span class="post-time">${timeAgo(post.created_at)}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Top Contributors (based only on questions, as answers are not available in the list)
+function getTopContributors(posts) {
+    const contributors = {};
+    posts.forEach(post => {
+        const author = post.author || 'Anonymous';
+        if (!contributors[author]) contributors[author] = { questions: 0 };
+        contributors[author].questions++;
+    });
+
+    return Object.entries(contributors)
+        .map(([name, data]) => ({
+            name,
+            score: data.questions * 5,
+            questions: data.questions,
+            answers: 0  // We cannot count answers here without additional API calls
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6);
+}
+
+function renderTopContributors(contributors) {
+    const container = document.getElementById('topContributorsContainer');
+    if (!contributors.length) {
+        container.innerHTML = '<p class="no-posts">No contributors yet.</p>';
+        return;
+    }
+    container.innerHTML = contributors.map(c => `
+        <div class="contributor-card">
+            <div class="contributor-avatar">${c.name.charAt(0).toUpperCase()}</div>
+            <div class="contributor-name">${escapeHTML(c.name)}</div>
+            <div class="contributor-score">${c.score} pts</div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                ${c.questions} Q
+            </div>
+        </div>
+    `).join('');
+}
+</script>
+</body>
+</html>

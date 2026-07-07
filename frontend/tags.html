@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackOpen – Communities</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Additional styles for tags page */
+        .tags-header {
+            margin-bottom: 2rem;
+        }
+        .tags-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .search-tags {
+            margin-bottom: 2rem;
+        }
+        .search-tags input {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--surface-color);
+            color: var(--text-primary);
+        }
+        .popular-preview {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .popular-preview h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .popular-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .popular-tag {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .popular-tag:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        .popular-tag:hover .tag-name,
+        .popular-tag:hover .tag-count {
+            color: white;
+        }
+        .popular-tag .tag-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        .popular-tag .tag-count {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .tags-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .tag-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tag-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .tag-card .tag-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        .tag-card .tag-count {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .no-tags {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+    <a href="index.html" class="logo">StackOpen</a>
+    <div class="user-actions">
+        <button id="themeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+        <span id="loggedInUser" style="display:none;"></span>
+        <a href="login.html" id="loginLink" class="btn btn-outline">Login</a>
+        <a href="signup.html" id="signupLink" class="btn btn-primary">Sign Up</a>
+        <a href="profile.html" id="profileLink" class="btn btn-outline" style="display:none;">Profile</a>
+        <button id="logoutBtn" class="btn btn-outline" style="display:none;">Logout</button>
+    </div>
+</header>
+
+<div class="container">
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="index.html"><i class="fas fa-home"></i> Home Feed</a></li>
+                <li><a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a></li>
+                <li class="active"><a href="tags.html"><i class="fas fa-tags"></i> Communities</a></li>
+            </ul>
+        </nav>
+        <div class="create-post-side">
+            <a href="create-post.html" class="btn btn-primary btn-block">+ Ask Question</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="tags-header">
+            <h1><i class="fas fa-users"></i> Communities (Tags)</h1>
+            <p>Explore technical topics – languages, frameworks, databases, DSA, and tools.</p>
+        </div>
+
+        <!-- Popular Communities Preview -->
+        <div id="popularCommunitiesPreview" class="popular-preview">
+            <h2><i class="fas fa-fire"></i> Popular Communities</h2>
+            <div class="popular-list">Loading...</div>
+        </div>
+
+        <!-- Search & All Tags -->
+        <div class="search-tags">
+            <input type="text" id="tagSearch" placeholder="Search communities... (e.g., javascript, python, react)">
+        </div>
+        <div id="tagsContainer" class="tags-grid">Loading tags...</div>
+    </main>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script>
+// List of non-technical tags to exclude
+const NON_TECH_TAGS = new Set([
+    'beginner', 'beginners', 'general', 'help', 'question', 'other',
+    'misc', 'random', 'discussion', 'advice', 'tips', 'resources',
+    'tutorial', 'guide', 'intro', 'basic', 'intermediate', 'advanced',
+    'performance', 'async', 'callback', 'promise', 'best-practices',
+    'debugging', 'error', 'fix', 'issue', 'problem', 'optimization'
+]);
+
+let allTags = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadTags();
+
+    const tagSearch = document.getElementById('tagSearch');
+    if (tagSearch) {
+        tagSearch.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const filtered = term
+                ? allTags.filter(t => t.name.toLowerCase().includes(term))
+                : allTags;
+            renderTags(filtered);
+        });
+    }
+});
+
+async function loadTags() {
+    const container = document.getElementById('tagsContainer');
+    const popularContainer = document.getElementById('popularCommunitiesPreview');
+    try {
+        const posts = await API.fetchPosts();  // uses your existing API
+        const tagMap = new Map();
+
+        posts.forEach(post => {
+            (post.tags || []).forEach(tag => {
+                const tagLower = tag.toLowerCase().trim();
+                // Skip non-technical tags
+                if (NON_TECH_TAGS.has(tagLower)) return;
+                // Keep original case for display
+                const existing = tagMap.get(tagLower);
+                if (existing) {
+                    existing.count++;
+                } else {
+                    tagMap.set(tagLower, { name: tag, count: 1 });
+                }
+            });
+        });
+
+        allTags = Array.from(tagMap.values())
+            .sort((a, b) => b.count - a.count);
+
+        // Show popular communities (top 6)
+        const topTags = allTags.slice(0, 6);
+        if (topTags.length) {
+            popularContainer.innerHTML = `
+                <h2><i class="fas fa-fire"></i> Popular Communities</h2>
+                <div class="popular-list">
+                    ${topTags.map(t => `
+                        <a href="#" class="popular-tag" data-tag="${escapeHTML(t.name)}">
+                            <span class="tag-name">#${escapeHTML(t.name)}</span>
+                            <span class="tag-count">${t.count} question${t.count !== 1 ? 's' : ''}</span>
+                        </a>
+                    `).join('')}
+                </div>
+            `;
+            // Attach click handlers to redirect to community page
+            document.querySelectorAll('.popular-tag').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tag = link.dataset.tag;
+                    window.location.href = `community.html?name=${encodeURIComponent(tag)}`;
+                });
+            });
+        } else {
+            popularContainer.innerHTML = '<p>No technical communities yet. Be the first to ask!</p>';
+        }
+
+        renderTags(allTags);
+    } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="error">Failed to load communities.</p>';
+        popularContainer.innerHTML = '<p>Failed to load.</p>';
+    }
+}
+
+function renderTags(tags) {
+    const container = document.getElementById('tagsContainer');
+    if (!tags.length) {
+        container.innerHTML = '<p class="no-tags">No matching communities found.</p>';
+        return;
+    }
+
+    container.innerHTML = tags.map(tag => `
+        <div class="tag-card" data-tag="${escapeHTML(tag.name)}">
+            <div class="tag-name">#${escapeHTML(tag.name)}</div>
+            <div class="tag-count">${tag.count} question${tag.count !== 1 ? 's' : ''}</div>
+        </div>
+    `).join('');
+
+    // Make each tag card clickable -> redirect to community page
+    document.querySelectorAll('.tag-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const tag = card.dataset.tag;
+            window.location.href = `community.html?name=${encodeURIComponent(tag)}`;
+        });
+    });
+}
+
+function escapeHTML(str) {
+    return String(str).replace(/[&<>]/g, m => {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+</script>
+</body>
+</html>

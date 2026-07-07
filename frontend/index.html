@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackOpen – Home</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+<header class="header">
+    <div class="logo">StackOpen</div>
+    <div class="search-bar" style="position:relative;">
+    <input type="text" id="searchInput" placeholder="Search questions, tags...">
+    <i class="fas fa-search"></i>
+    <div id="searchDropdown" class="search-dropdown"></div>
+    </div>
+    <div class="user-actions">
+        <button id="themeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+        <span id="loggedInUser" style="display:none;"></span>
+        <a href="login.html" id="loginLink" class="btn btn-outline">Login</a>
+        <a href="signup.html" id="signupLink" class="btn btn-primary">Sign Up</a>
+        <a href="profile.html" id="profileLink" class="btn btn-outline" style="display:none;">Profile</a>
+        <button id="logoutBtn" class="btn btn-outline" style="display:none;">Logout</button>
+    </div>
+</header>
+
+<div class="container-3col">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li class="active"><a href="index.html"><i class="fas fa-home"></i> Home Feed</a></li>
+                <li><a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a></li>
+                <li><a href="tags.html"><i class="fas fa-tags"></i> Tags</a></li>
+            </ul>
+        </nav>
+        <div class="create-post-side">
+            <a href="create-post.html" class="btn btn-primary btn-block">+ Ask Question</a>
+        </div>
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="main-content">
+        <div class="feed-header">
+            <h1>All Questions</h1>
+            <span id="questionCount" class="question-count"></span>
+        </div>
+        <div id="postsContainer" class="posts-list"></div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="right-sidebar">
+        <!-- Trending -->
+        <div class="right-section">
+            <h3 class="right-section-title">
+                <i class="fas fa-fire" style="color:#e74c3c"></i> Trending
+            </h3>
+            <div id="trendingContainer"></div>
+        </div>
+
+        <!-- Needs Attention -->
+        <div class="right-section">
+            <h3 class="right-section-title">
+                <i class="fas fa-exclamation-circle" style="color:#f39c12"></i> Needs Attention
+            </h3>
+            <div id="unansweredContainer"></div>
+        </div>
+    </aside>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/posts.js"></script>
+<script src="js/main.js"></script>
+<script>
+// Helper functions (if not already defined in posts.js)
+function escapeHTML(str) {
+    return String(str).replace(/[&<>"]/g, m =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+}
+function timeAgo(dateString) {
+    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    if (seconds < 60) return `${seconds} seconds ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+}
+
+function filterByTag(tag) {
+    document.getElementById('searchInput').value = tag;
+    loadAndRenderPosts(tag);
+    closeDropdown();
+}
+
+// Global posts cache (needed for tag suggestions)
+let allPostsCache = [];
+
+// Load trending and unanswered (same as before)
+async function loadTrending() {
+    const container = document.getElementById('trendingContainer');
+    try {
+        const posts = await API.fetchTrending();
+        if (!posts.length) {
+            container.innerHTML = '<p class="right-empty">No trending yet</p>';
+            return;
+        }
+        container.innerHTML = posts.map((post, i) => `
+            <a href="post.html?id=${post.id}" class="right-post-item">
+                <span class="right-rank">${i + 1}</span>
+                <div class="right-post-info">
+                    <span class="right-post-title">${escapeHTML(post.title)}</span>
+                    <span class="right-post-meta">↑ ${post.votes || 0} votes</span>
+                </div>
+            </a>
+        `).join('');
+    } catch(e) {
+        container.innerHTML = '<p class="right-empty">Failed to load</p>';
+    }
+}
+
+async function loadUnanswered() {
+    const container = document.getElementById('unansweredContainer');
+    try {
+        const posts = await API.fetchUnanswered();
+        if (!posts.length) {
+            container.innerHTML = '<p class="right-empty">All answered! 🎉</p>';
+            return;
+        }
+        container.innerHTML = posts.map(post => `
+            <a href="post.html?id=${post.id}" class="right-post-item unanswered-item">
+                <span class="right-badge">0</span>
+                <div class="right-post-info">
+                    <span class="right-post-title">${escapeHTML(post.title)}</span>
+                    <span class="right-post-meta">${escapeHTML(post.author)} • ${timeAgo(post.created_at)}</span>
+                </div>
+            </a>
+        `).join('');
+    } catch(e) {
+        container.innerHTML = '<p class="right-empty">Failed to load</p>';
+    }
+}
+
+// Dropdown functions
+let searchDebounce;
+let searchCache = {};
+
+async function showSearchDropdown(term) {
+    const dropdown = document.getElementById('searchDropdown');
+    dropdown.innerHTML = '<div class="search-no-results">Searching...</div>';
+    dropdown.classList.add('active');
+
+    try {
+        // Search posts
+        const posts = await API.fetchPosts(term);
+
+        // Get matching tags from cached posts (fetch all if not cached)
+        if (allPostsCache.length === 0) {
+            allPostsCache = await API.fetchPosts();
+        }
+        const termLower = term.toLowerCase();
+        const tagMatches = new Set();
+        allPostsCache.forEach(post => {
+            (post.tags || []).forEach(tag => {
+                if (tag.toLowerCase().includes(termLower)) {
+                    tagMatches.add(tag);
+                }
+            });
+        });
+
+        let html = '';
+
+        // Questions section
+        if (posts.length > 0) {
+            html += `<div class="search-dropdown-section">
+                <div class="search-dropdown-label">Questions</div>
+                ${posts.slice(0, 5).map(post => `
+                    <a href="post.html?id=${post.id}" class="search-suggestion" onclick="closeDropdown()">
+                        <span class="search-suggestion-text">${escapeHTML(post.title)}</span>
+                        <span style="font-size:0.75rem;color:var(--text-secondary)">↑${post.votes||0}</span>
+                    </a>
+                `).join('')}
+            </div>`;
+        }
+
+        // Tags section
+        if (tagMatches.size > 0) {
+            html += `<div class="search-dropdown-section">
+                <div class="search-dropdown-label">Tags</div>
+                ${[...tagMatches].slice(0, 4).map(tag => `
+                    <div class="search-suggestion" onclick="filterByTag('${tag.replace(/'/g, "\\'")}'); closeDropdown();">
+                        <i class="fas fa-tag"></i>
+                        <span class="search-suggestion-text">#${escapeHTML(tag)}</span>
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+
+        if (posts.length === 0 && tagMatches.size === 0) {
+            html = `
+                <div class="search-no-results">
+                    No results for "<strong>${escapeHTML(term)}</strong>"
+                </div>
+                <a href="create-post.html" class="search-suggestion" style="justify-content:center;color:var(--primary-color)">
+                    <i class="fas fa-plus"></i>
+                    <span>Ask this question</span>
+                </a>`;
+        }
+
+        html += `<div class="search-footer">Press Enter to search • Esc to close</div>`;
+        dropdown.innerHTML = html;
+
+    } catch(e) {
+        console.error(e);
+        dropdown.innerHTML = '<div class="search-no-results">Search failed. Try again.</div>';
+    }
+}
+
+function closeDropdown() {
+    const dropdown = document.getElementById('searchDropdown');
+    if (dropdown) {
+        dropdown.classList.remove('active');
+        dropdown.innerHTML = '';
+    }
+}
+
+// Main event listeners
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load initial posts, trending, unanswered
+    await loadAndRenderPosts();
+    loadTrending();
+    loadUnanswered();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const tagParam = urlParams.get('tag');
+    if (tagParam) {
+        document.getElementById('searchInput').value = tagParam;
+        await loadAndRenderPosts(tagParam);
+    }
+
+    // Cache all posts for tag suggestions
+    allPostsCache = await API.fetchPosts();
+
+    // Search input handler with dropdown
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', async (e) => {
+        const term = e.target.value.trim();
+        
+        // Filter main feed
+        await loadAndRenderPosts(term);
+
+        // Show dropdown
+        clearTimeout(searchDebounce);
+        if (!term || term.length < 2) {
+            closeDropdown();
+            return;
+        }
+
+        searchDebounce = setTimeout(async () => {
+            await showSearchDropdown(term);
+        }, 300);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-bar')) {
+            closeDropdown();
+        }
+    });
+
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', (e) => {
+        const items = document.querySelectorAll('.search-suggestion');
+        const active = document.querySelector('.search-suggestion.focused');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!active) {
+                items[0]?.classList.add('focused');
+            } else {
+                const next = [...items].indexOf(active) + 1;
+                active.classList.remove('focused');
+                items[next % items.length]?.classList.add('focused');
+            }
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (active) {
+                const prev = [...items].indexOf(active) - 1;
+                active.classList.remove('focused');
+                items[prev < 0 ? items.length - 1 : prev]?.classList.add('focused');
+            }
+        }
+        if (e.key === 'Enter' && active) {
+            e.preventDefault();
+            active.click();
+        }
+        if (e.key === 'Escape') closeDropdown();
+    });
+});
+</script>
+</button>
+</body>
+</html>

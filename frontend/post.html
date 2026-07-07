@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackOpen – Post</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <a href="index.html" class="logo">StackOpen</a>
+        <div class="user-actions">
+            <button id="themeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+            <span id="loggedInUser" style="display: none;"></span>
+            <a href="login.html" id="loginLink" class="btn btn-outline">Login</a>
+            <a href="signup.html" id="signupLink" class="btn btn-primary">Sign Up</a>
+        </div>
+    </header>
+
+    <div class="container">
+       <aside class="sidebar">
+    <nav>
+        <ul>
+            <li><a href="index.html"><i class="fas fa-home"></i> Home Feed</a></li>
+            <li><a href="tags.html"><i class="fas fa-users"></i> Communities</a></li>
+            <li><a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a></li>
+        </ul>
+    </nav>
+    <div class="create-post-side">
+        <a href="create-post.html" class="btn btn-primary btn-block">+ Ask Question</a>
+    </div>
+</aside>
+
+        <main class="main-content">
+            <div id="postDetailContainer">
+                <!-- Post and answers will be rendered here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/posts.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('id');
+            if (postId) {
+                loadAndRenderPostDetail(postId);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+        
+    </script>
+</body>
+</html>

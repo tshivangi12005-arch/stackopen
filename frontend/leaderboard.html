@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackOpen – Leaderboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <a href="index.html" class="logo">StackOpen</a>
+    <div class="user-actions">
+        <button id="themeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+        <span id="loggedInUser" style="display:none;"></span>
+        <a href="login.html" id="loginLink" class="btn btn-outline">Login</a>
+        <a href="signup.html" id="signupLink" class="btn btn-primary">Sign Up</a>
+        <a href="profile.html" id="profileLink" class="btn btn-outline" style="display:none;">Profile</a>
+        <button id="logoutBtn" class="btn btn-outline" style="display:none;">Logout</button>
+    </div>
+</header>
+
+<div class="container">
+    <aside class="sidebar">
+        <nav><ul>
+            <li><a href="index.html"><i class="fas fa-home"></i> Home Feed</a></li>
+            <li class="active"><a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a></li>
+        </ul></nav>
+        <div class="create-post-side">
+            <a href="create-post.html" class="btn btn-primary btn-block">+ Ask Question</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <h1>🏆 Leaderboard</h1>
+        <p class="subtitle">Top contributors this month</p>
+
+        <div class="leaderboard-info">
+            <div class="badge-info"><span class="level-badge beginner">Beginner</span> 0–49 pts</div>
+            <div class="badge-info"><span class="level-badge contributor">Contributor</span> 50–149 pts</div>
+            <div class="badge-info"><span class="level-badge expert">Expert</span> 150+ pts</div>
+        </div>
+
+        <div id="leaderboardList" class="leaderboard-list">
+            <p>Loading...</p>
+        </div>
+    </main>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const container = document.getElementById('leaderboardList');
+    try {
+        const users = await API.getLeaderboard();
+        if (!users.length) {
+            container.innerHTML = '<p class="no-posts">No contributors yet. Start answering!</p>';
+            return;
+        }
+        const medals = ['🥇','🥈','🥉'];
+        container.innerHTML = users.map((u, i) => `
+            <div class="leader-card">
+                <span class="rank">${medals[i] || `#${i+1}`}</span>
+                <div class="leader-avatar">${u.username.charAt(0).toUpperCase()}</div>
+                <div class="leader-info">
+                    <span class="leader-name">${escapeHTML(u.username)}</span>
+                    <span class="level-badge ${(u.level||'Beginner').toLowerCase()}">${u.level || 'Beginner'}</span>
+                </div>
+                <span class="leader-score">${u.score || 0} pts</span>
+            </div>
+        `).join('');
+    } catch(e) {
+        container.innerHTML = '<p class="error">Failed to load leaderboard.</p>';
+    }
+});
+
+function escapeHTML(str) {
+    return String(str).replace(/[&<>"]/g, m =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackOpen – Profile</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css">
+    <style>
+        .profile-header {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            cursor: pointer;
+            position: relative;
+            transition: opacity 0.2s;
+        }
+        .profile-avatar:hover::after {
+            content: '✏️ Change';
+            position: absolute;
+            bottom: 0;
+            left: 0; right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 0.3rem;
+            border-radius: 0 0 60px 60px;
+        }
+        .profile-info { flex: 1; }
+        .profile-info h2 { margin: 0 0 0.25rem; font-size: 2rem; }
+        .profile-bio { color: var(--text-secondary); max-width: 500px; margin-bottom: 1rem; font-style: italic; }
+        .profile-stats { display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap; }
+        .stat-item { text-align: center; }
+        .stat-number { font-size: 1.5rem; font-weight: 600; display: block; }
+        .stat-label { color: var(--text-secondary); font-size: 0.9rem; }
+        .profile-rank { margin-top: 0.75rem; font-size: 0.9rem; font-weight: 500; color: var(--primary-color); }
+        .profile-actions { margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .profile-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; }
+        .tab-btn { background: none; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .repo-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; transition: opacity 0.3s; }
+        .repo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+        .repo-name { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); text-decoration: none; }
+        .repo-name:hover { text-decoration: underline; }
+        .repo-meta { display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; flex-wrap: wrap; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); border: 2px dashed var(--border-color); border-radius: 8px; }
+        .post-tags { display: inline-flex; gap: 0.5rem; flex-wrap: wrap; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .modal h2 { margin-bottom: 1.5rem; font-size: 1.4rem; }
+        .modal-close { float: right; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary); margin-top: -0.5rem; }
+        .modal .form-group { margin-bottom: 1.25rem; }
+        .modal .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
+        .modal .form-group input, .modal .form-group textarea {
+            width: 100%; padding: 0.65rem 0.75rem;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            background: var(--bg-color); color: var(--text-primary);
+            font-size: 0.95rem; font-family: inherit;
+        }
+        .modal .form-group textarea { resize: vertical; min-height: 80px; }
+        .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+        .modal-success { color: #28a745; font-size: 0.9rem; margin-top: 0.5rem; display: none; }
+
+        /* Color picker */
+        .color-options {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .color-option {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .color-option:hover { transform: scale(1.15); }
+        .color-option.selected { border-color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="index.html" class="logo">StackOpen</a>
+        <div class="user-actions">
+            <button id="themeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+            <span id="loggedInUser" style="display:none;"></span>
+            <a href="login.html" id="loginLink" class="btn btn-outline">Login</a>
+            <a href="signup.html" id="signupLink" class="btn btn-primary">Sign Up</a>
+            <a href="profile.html" id="profileLink" class="btn btn-outline" style="display:none;">Profile</a>
+            <button id="logoutBtn" class="btn btn-outline" style="display:none;">Logout</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <main class="main-content" style="grid-column: 1/-1;">
+            <div id="profileHeader" class="profile-header"></div>
+
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="questions">Questions</button>
+                <button class="tab-btn" data-tab="answers">Answers</button>
+            </div>
+
+            <div id="overviewTab" class="tab-content active"></div>
+            <div id="questionsTab" class="tab-content"></div>
+            <div id="answersTab" class="tab-content"></div>
+        </main>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <button class="modal-close" id="closeEditModal">×</button>
+            <h2>Edit Profile</h2>
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="editDisplayName" placeholder="Your display name">
+            </div>
+            <div class="form-group">
+                <label>Bio</label>
+                <textarea id="editBio" placeholder="Tell the community about yourself..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Avatar Color</label>
+                <div class="color-options" id="colorOptions"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="cancelEdit">Cancel</button>
+                <button class="btn btn-primary" id="saveProfile">Save Changes</button>
+            </div>
+            <p class="modal-success" id="editSuccess">✅ Profile updated!</p>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal">
+            <button class="modal-close" id="closePasswordModal">×</button>
+            <h2>Change Password</h2>
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="currentPassword" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword" placeholder="••••••••" minlength="6">
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirmNewPassword" placeholder="••••••••">
+            </div>
+            <div id="passwordError" class="error-message"></div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="cancelPassword">Cancel</button>
+                <button class="btn btn-primary" id="savePassword">Update Password</button>
+            </div>
+            <p class="modal-success" id="passwordSuccess">✅ Password updated!</p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/posts.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        let currentUsername = null;
+        let isOwnProfile = true;
+
+        const AVATAR_COLORS = [
+            'linear-gradient(135deg, #0d6efd, #6f42c1)',
+            'linear-gradient(135deg, #e74c3c, #c0392b)',
+            'linear-gradient(135deg, #2ecc71, #27ae60)',
+            'linear-gradient(135deg, #f39c12, #e67e22)',
+            'linear-gradient(135deg, #1abc9c, #16a085)',
+            'linear-gradient(135deg, #9b59b6, #8e44ad)',
+            'linear-gradient(135deg, #e91e63, #c2185b)',
+            'linear-gradient(135deg, #00bcd4, #0097a7)',
+        ];
+
+        function getProfileData() {
+            const saved = localStorage.getItem(`profile_${currentUsername}`);
+            return saved ? JSON.parse(saved) : {
+                displayName: '',
+                bio: '',
+                avatarColor: AVATAR_COLORS[0]
+            };
+        }
+
+        function saveProfileData(data) {
+            localStorage.setItem(`profile_${currentUsername}`, JSON.stringify(data));
+        }
+
+        function renderProfileHeader(userPosts, userAnswers, profile, rank) {
+            const profileData = getProfileData();
+            const displayName = profileData.displayName || currentUsername;
+            const bio = profileData.bio || (isOwnProfile ? 'Your profile' : 'User profile');
+            const avatarColor = profileData.avatarColor || AVATAR_COLORS[0];
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+            const totalReputation = profile ? profile.score : 0;
+
+            const header = document.getElementById('profileHeader');
+            header.innerHTML = `
+                <div class="profile-avatar" id="avatarEl" style="background: ${avatarColor}" 
+                     ${isOwnProfile ? 'onclick="openEditModal()" title="Click to edit profile"' : ''}>
+                    ${avatarLetter}
+                </div>
+                <div class="profile-info">
+                    <h2>${escapeHTML(displayName)}</h2>
+                    <p class="profile-bio">${escapeHTML(bio)}</p>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${totalReputation}</span>
+                            <span class="stat-label">Reputation</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">${userPosts.length}</span>
+                            <span class="stat-label">Questions</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">${userAnswers.length}</span>
+                            <span class="stat-label">Answers</span>
+                        </div>
+                    </div>
+                    ${rank ? `<div class="profile-rank">🏅 Rank: #${rank}</div>` : ''}
+                    ${isOwnProfile ? `
+                    <div class="profile-actions">
+                        <button class="btn btn-outline" onclick="openEditModal()">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
+                        <button class="btn btn-outline" onclick="openPasswordModal()">
+                            <i class="fas fa-key"></i> Change Password
+                        </button>
+                    </div>` : ''}
+                </div>
+            `;
+        }
+
+        function openEditModal() {
+            const profileData = getProfileData();
+            document.getElementById('editDisplayName').value = profileData.displayName || currentUsername;
+            document.getElementById('editBio').value = profileData.bio || '';
+
+            // Render color options
+            const colorContainer = document.getElementById('colorOptions');
+            colorContainer.innerHTML = AVATAR_COLORS.map((color, i) => `
+                <div class="color-option ${color === profileData.avatarColor ? 'selected' : ''}"
+                     style="background: ${color}"
+                     data-color="${color}"
+                     onclick="selectColor(this)">
+                </div>
+            `).join('');
+
+            document.getElementById('editModal').classList.add('active');
+            document.getElementById('editSuccess').style.display = 'none';
+        }
+
+        function selectColor(el) {
+            document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function openPasswordModal() {
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            document.getElementById('passwordError').textContent = '';
+            document.getElementById('passwordSuccess').style.display = 'none';
+            document.getElementById('passwordModal').classList.add('active');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const requestedUser = urlParams.get('user');
+            const loggedUser = API.getCurrentUser();
+
+            if (requestedUser) {
+                currentUsername = requestedUser;
+                isOwnProfile = loggedUser && loggedUser.username === requestedUser;
+            } else {
+                if (!loggedUser) {
+                    window.location.href = 'login.html?redirect=profile.html';
+                    return;
+                }
+                currentUsername = loggedUser.username;
+                isOwnProfile = true;
+            }
+
+            const profile = await API.getUserProfile(currentUsername);
+            const userPosts = await API.getUserPosts(currentUsername);
+            const userAnswers = await API.getUserAnswers(currentUsername);
+            const leaderboard = await API.getLeaderboard();
+            const rankIndex = leaderboard.findIndex(u => u.username === currentUsername);
+            const rank = rankIndex !== -1 ? rankIndex + 1 : null;
+
+            renderProfileHeader(userPosts, userAnswers, profile, rank);
+
+            // Save profile button
+            document.getElementById('saveProfile').addEventListener('click', () => {
+                const displayName = document.getElementById('editDisplayName').value.trim();
+                const bio = document.getElementById('editBio').value.trim();
+                const selectedColor = document.querySelector('.color-option.selected');
+                const avatarColor = selectedColor ? selectedColor.dataset.color : AVATAR_COLORS[0];
+
+                if (!displayName) { alert('Display name cannot be empty'); return; }
+
+                saveProfileData({ displayName, bio, avatarColor });
+                document.getElementById('editSuccess').style.display = 'block';
+
+                // Re-render header with new data
+                setTimeout(() => {
+                    closeEditModal();
+                    renderProfileHeader(userPosts, userAnswers, profile, rank);
+                }, 800);
+            });
+
+            // Password change
+           // Password change
+document.getElementById('savePassword').addEventListener('click', async () => {
+    const current = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmNewPassword').value;
+    const errorDiv = document.getElementById('passwordError');
+
+    if (!current || !newPass || !confirm) {
+        errorDiv.textContent = 'All fields are required.'; return;
+    }
+    if (newPass.length < 6) {
+        errorDiv.textContent = 'Password must be at least 6 characters.'; return;
+    }
+    if (newPass !== confirm) {
+        errorDiv.textContent = 'Passwords do not match.'; return;
+    }
+
+    try {
+        await API.changePassword(currentUsername, current, newPass);
+        errorDiv.textContent = '';
+        document.getElementById('passwordSuccess').style.display = 'block';
+        setTimeout(closePasswordModal, 1000);
+    } catch (err) {
+        errorDiv.textContent = err.message;
+    }
+});
+
+            // Close modals
+            document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
+            document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+            document.getElementById('closePasswordModal').addEventListener('click', closePasswordModal);
+            document.getElementById('cancelPassword').addEventListener('click', closePasswordModal);
+
+            // Close on overlay click
+            document.getElementById('editModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('editModal')) closeEditModal();
+            });
+            document.getElementById('passwordModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('passwordModal')) closePasswordModal();
+            });
+
+            // Overview tab
+            const overviewTab = document.getElementById('overviewTab');
+            const latestPosts = userPosts.slice(0, 5);
+            const latestAnswers = userAnswers.slice(0, 5);
+            let overviewHTML = '<h3>Latest Questions</h3>';
+            if (latestPosts.length === 0) {
+                overviewHTML += '<p class="empty-state">No questions yet</p>';
+            } else {
+                latestPosts.forEach(post => {
+                    overviewHTML += `
+                        <div class="repo-card">
+                            <div class="repo-header">
+                                <a href="post.html?id=${post.id}" class="repo-name">${escapeHTML(post.title)}</a>
+                                <span>${timeAgo(post.created_at)}</span>
+                            </div>
+                            <p>${escapeHTML(post.body.substring(0, 100))}...</p>
+                            <div class="repo-meta">
+                                <span><i class="fas fa-arrow-up"></i> ${post.votes || 0}</span>
+                                <span><i class="far fa-comment"></i> ${post.answers?.length || 0}</span>
+                            </div>
+                        </div>`;
+                });
+            }
+            overviewHTML += '<h3 style="margin-top:1.5rem">Latest Answers</h3>';
+            if (latestAnswers.length === 0) {
+                overviewHTML += '<p class="empty-state">No answers yet</p>';
+            } else {
+                for (const ans of latestAnswers) {
+                    try {
+                        const post = await API.fetchPostById(ans.post_id);
+                        overviewHTML += `
+                            <div class="repo-card">
+                                <div class="repo-header">
+                                    <a href="post.html?id=${ans.post_id}" class="repo-name">${escapeHTML(post.title)}</a>
+                                    <span>${timeAgo(ans.created_at)}</span>
+                                </div>
+                                <p>${escapeHTML(ans.body.substring(0, 100))}...</p>
+                                <div class="repo-meta">
+                                    <span><i class="fas fa-arrow-up"></i> ${ans.votes || 0}</span>
+                                </div>
+                            </div>`;
+                    } catch { }
+                }
+            }
+            overviewTab.innerHTML = overviewHTML;
+
+            // Questions tab
+            const questionsTab = document.getElementById('questionsTab');
+            if (userPosts.length === 0) {
+                questionsTab.innerHTML = '<p class="empty-state">No questions yet.</p>';
+            } else {
+                questionsTab.innerHTML = userPosts.map(post => `
+                    <div class="repo-card">
+                        <div class="repo-header">
+                            <a href="post.html?id=${post.id}" class="repo-name">${escapeHTML(post.title)}</a>
+                            <div>
+                                <span style="margin-right:1rem">${timeAgo(post.created_at)}</span>
+                                ${isOwnProfile ? `<button class="btn btn-danger btn-sm delete-post" data-id="${post.id}">
+                                    <i class="fas fa-trash"></i> Delete</button>` : ''}
+                            </div>
+                        </div>
+                        <p>${escapeHTML(post.body.substring(0, 150))}...</p>
+                        <div class="repo-meta">
+                            <span><i class="fas fa-arrow-up"></i> ${post.votes || 0}</span>
+                            <span><i class="far fa-comment"></i> ${post.answers?.length || 0}</span>
+                            <div class="post-tags">
+                                ${(post.tags || []).map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>`).join('');
+
+                if (isOwnProfile) {
+                    document.querySelectorAll('.delete-post').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (confirm('Delete this question?')) {
+                                try {
+                                    await API.deletePost(btn.dataset.id);
+                                    btn.closest('.repo-card').remove();
+                                } catch (err) {
+                                    alert('Failed to delete: ' + err.message);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+
+            // Answers tab
+            const answersTab = document.getElementById('answersTab');
+            if (userAnswers.length === 0) {
+                answersTab.innerHTML = '<p class="empty-state">No answers yet.</p>';
+            } else {
+                let answersHTML = '';
+                for (const ans of userAnswers) {
+                    try {
+                        const post = await API.fetchPostById(ans.post_id);
+                        answersHTML += `
+                            <div class="repo-card" data-answer-id="${ans.id}">
+                                <div class="repo-header">
+                                    <a href="post.html?id=${ans.post_id}" class="repo-name">${escapeHTML(post.title)}</a>
+                                    <div>
+                                        <span style="margin-right:1rem">${timeAgo(ans.created_at)}</span>
+                                        ${isOwnProfile ? `<button class="btn btn-danger btn-sm delete-answer" data-id="${ans.id}">
+                                            <i class="fas fa-trash"></i> Delete</button>` : ''}
+                                    </div>
+                                </div>
+                                <p>${escapeHTML(ans.body.substring(0, 150))}...</p>
+                                <div class="repo-meta">
+                                    <span><i class="fas fa-arrow-up"></i> ${ans.votes || 0}</span>
+                                </div>
+                            </div>`;
+                    } catch { }
+                }
+                answersTab.innerHTML = answersHTML || '<p class="empty-state">No answers to display</p>';
+
+                // Add delete answer event listeners
+                if (isOwnProfile) {
+                    document.querySelectorAll('.delete-answer').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (confirm('Delete this answer? This action cannot be undone.')) {
+                                try {
+                                    await API.deleteAnswer(btn.dataset.id);
+                                    // Remove from UI
+                                    const card = btn.closest('.repo-card');
+                                    card.style.opacity = '0.5';
+                                    setTimeout(() => card.remove(), 300);
+                                    
+                                    // Check if no answers left
+                                    setTimeout(() => {
+                                        if (!document.querySelectorAll('#answersTab .repo-card').length) {
+                                            answersTab.innerHTML = '<p class="empty-state">No answers yet.</p>';
+                                        }
+                                    }, 400);
+                                } catch (err) {
+                                    alert('Failed to delete: ' + err.message);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+
+            // Tabs
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
