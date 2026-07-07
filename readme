@@ -1,0 +1,126 @@
+# StackOpen 🚀
+
+A Stack Overflow-inspired Q&A community platform for developers. Ask questions, share knowledge, vote on answers, and grow together.
+
+## 🌐 Live Demo
+
+https://stackopen.netlify.app/
+
+## ✨ Features
+
+- 📝 Ask and answer questions
+- 🏷️ Tag-based communities
+- 🏆 Leaderboard with reputation scores
+- 👤 User profiles with edit functionality
+- 🌙 Dark/Light mode toggle
+- 🔍 Search questions and communities
+- 🗑️ Delete your own questions and answers
+
+## 🛠️ Tech Stack
+
+- **Frontend:** HTML, CSS, Vanilla JavaScript
+- **Backend/Database:** [Supabase](https://supabase.com) (PostgreSQL)
+- **Hosting:** Netlify
+- **Icons:** Font Awesome 6
+
+## 📁 Project Structure
+
+```
+frontend/
+├── css/
+│   └── style.css          # Main stylesheet
+├── js/
+│   ├── api.js             # Supabase API calls
+│   ├── auth.js            # Auth logic (login/signup/logout)
+│   ├── main.js            # App initialization
+│   └── posts.js           # Post/answer rendering & voting
+├── index.html             # Home feed
+├── post.html              # Single post detail
+├── create-post.html       # Ask a question
+├── profile.html           # User profile
+├── tags.html              # Communities/tags list
+├── community.html         # Single community page
+├── leaderboard.html       # Top contributors
+├── login.html             # Login page
+└── signup.html            # Signup page
+```
+
+## 🗄️ Database Schema (Supabase)
+
+### Tables:
+
+**posts**
+```sql
+id          BIGSERIAL PRIMARY KEY
+title       TEXT NOT NULL
+body        TEXT NOT NULL
+tags        TEXT[]
+author      TEXT
+votes       INT DEFAULT 0
+is_answered BOOLEAN DEFAULT false
+created_at  TIMESTAMP DEFAULT NOW()
+```
+
+**answers**
+```sql
+id         BIGSERIAL PRIMARY KEY
+post_id    BIGINT REFERENCES posts(id) ON DELETE CASCADE
+body       TEXT NOT NULL
+author     TEXT
+votes      INT DEFAULT 0
+created_at TIMESTAMP DEFAULT NOW()
+```
+
+**users**
+```sql
+id         BIGSERIAL PRIMARY KEY
+username   TEXT UNIQUE NOT NULL
+email      TEXT
+score      INT DEFAULT 0
+level      TEXT DEFAULT 'Beginner'
+created_at TIMESTAMP DEFAULT NOW()
+```
+
+**votes**
+```sql
+id         BIGSERIAL PRIMARY KEY
+user_id    TEXT NOT NULL
+post_id    BIGINT REFERENCES posts(id) ON DELETE CASCADE
+answer_id  BIGINT REFERENCES answers(id) ON DELETE CASCADE
+vote_type  TEXT CHECK (vote_type IN ('upvote', 'downvote'))
+created_at TIMESTAMP DEFAULT NOW()
+UNIQUE(user_id, post_id)
+UNIQUE(user_id, answer_id)
+```
+
+## 🚀 Getting Started
+
+### 1. Clone the repo
+```bash
+git clone https://github.com/your-username/stackopen.git
+cd stackopen/frontend
+```
+
+### 2. Open locally
+Just open `index.html` in your browser — no build step needed!
+
+Or use Live Server in VS Code for the best experience.
+
+### 3. Set up your own Supabase (optional)
+If you want your own database:
+1. Create a free project at [supabase.com](https://supabase.com)
+2. Run the SQL schema above in the SQL Editor
+3. Replace `SUPABASE_URL` and `SUPABASE_KEY` in `js/api.js`
+
+## 📦 Deploying to Netlify
+
+1. Push this repo to GitHub
+2. Go to [netlify.com](https://netlify.com) → "Add new site" → "Import from Git"
+3. Select your GitHub repo
+4. Set **Base directory** to `frontend`
+5. Click **Deploy** — done!
+
+## 🤝 Contributing
+
+Pull requests are welcome! For major changes, please open an issue first.
+
